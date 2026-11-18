@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import CurrencySelector from "@/components/CurrencySelector";
 import { type Currency, CURRENCIES, getCurrencyFromStorage } from "@/lib/currency";
@@ -57,8 +57,68 @@ export default function ReceiptGeneratorPage() {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
   const [items, setItems] = useState<ReceiptItem[]>([makeItem()]);
-  const [taxLabel, setTaxLabel] = useState("GST");
-  const [taxRate, setTaxRate] = useState("0");
+
+  // Multiple tax/charge rows
+  const [taxes, setTaxes] = useState<{ id: number; label: string; rate: string; type: "percent" | "amount" }[]>([
+    { id: 1, label: "CGST", rate: "9", type: "percent" },
+    { id: 2, label: "SGST", rate: "9", type: "percent" },
+  ]);
+  const nextTaxIdRef = useRef(3);
+  const addTax = useCallback(() => {
+    setTaxes(prev => [...prev, { id: nextTaxIdRef.current++, label: "", rate: "0", type: "percent" }]);
+  }, []);
+  const removeTax = useCallback((id: number) => { setTaxes(prev => prev.filter(t => t.id !== id)); }, []);
+  const updateTax = useCallback((id: number, field: string, val: string) => {
+    setTaxes(prev => prev.map(t => t.id === id ? { ...t, [field]: val } : t));
+  }, []);
+
+  // Tax presets
+  const applyTaxPreset = useCallback((preset: "gst18" | "cgst_sgst" | "vat20" | "sales_tax" | "no_tax") => {
+    switch (preset) {
+      case "gst18":
+        setTaxes([{ id: nextTaxIdRef.current++, label: "GST", rate: "18", type: "percent" }]);
+        break;
+      case "cgst_sgst":
+        setTaxes([
+          { id: nextTaxIdRef.current++, label: "CGST", rate: "9", type: "percent" },
+          { id: nextTaxIdRef.current++, label: "SGST", rate: "9", type: "percent" },
+        ]);
+        break;
+      case "vat20":
+        setTaxes([{ id: nextTaxIdRef.current++, label: "VAT", rate: "20", type: "percent" }]);
+        break;
+      case "sales_tax":
+        setTaxes([{ id: nextTaxIdRef.current++, label: "Sales Tax", rate: "8.25", type: "percent" }]);
+        break;
+      case "no_tax":
+        setTaxes([]);
+        break;
+    }
+  }, []);
+
+  // Custom extra charges (service charge, delivery, packaging etc)
+  const [extraCharges, setExtraCharges] = useState<{ id: number; label: string; amount: string }[]>([]);
+  const nextChargeIdRef = useRef(1);
+  const addCharge = useCallback(() => {
+    setExtraCharges(prev => [...prev, { id: nextChargeIdRef.current++, label: "", amount: "0" }]);
+  }, []);
+  const removeCharge = useCallback((id: number) => { setExtraCharges(prev => prev.filter(c => c.id !== id)); }, []);
+  const updateCharge = useCallback((id: number, field: string, val: string) => {
+    setExtraCharges(prev => prev.map(c => c.id === id ? { ...c, [field]: val } : c));
+  }, []);
+
+  // Extra charge presets
+  const addChargePreset = useCallback((preset: "service" | "delivery" | "packaging" | "convenience") => {
+    const presets: Record<string, { label: string; amount: string }> = {
+      service: { label: "Service Charge", amount: "0" },
+      delivery: { label: "Delivery Fee", amount: "0" },
+      packaging: { label: "Packaging", amount: "0" },
+      convenience: { label: "Convenience Fee", amount: "0" },
+    };
+    const p = presets[preset];
+    setExtraCharges(prev => [...prev, { id: nextChargeIdRef.current++, ...p }]);
+  }, []);
+
   const [discountType, setDiscountType] = useState<"amount" | "percent">("amount");
   const [discountValue, setDiscountValue] = useState("0");
   const [tipAmount, setTipAmount] = useState("0");
@@ -91,9 +151,23 @@ export default function ReceiptGeneratorPage() {
     ? subtotal * (parseFloat(discountValue) || 0) / 100
     : parseFloat(discountValue) || 0;
   const afterDiscount = Math.max(0, subtotal - discountAmt);
-  const taxAmt = afterDiscount * (parseFloat(taxRate) || 0) / 100;
+
+  // Calculate each tax
+  const taxAmounts = taxes.map(t => ({
+    label: t.label || "Tax",
+    amount: t.type === "percent"
+      ? afterDiscount * (parseFloat(t.rate) || 0) / 100
+      : parseFloat(t.rate) || 0,
+    rate: t.rate,
+    type: t.type,
+  }));
+  const totalTax = taxAmounts.reduce((s, t) => s + t.amount, 0);
+
+  // Extra charges
+  const totalExtraCharges = extraCharges.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+
   const tip = parseFloat(tipAmount) || 0;
-  const grandTotal = afterDiscount + taxAmt + tip;
+  const grandTotal = afterDiscount + totalTax + totalExtraCharges + tip;
 
   function fmt(n: number) { return n.toFixed(2); }
 
@@ -118,7 +192,8 @@ export default function ReceiptGeneratorPage() {
     totalLines += 1; // divider
     totalLines += 1; // subtotal
     if (discountAmt > 0) totalLines += 1;
-    totalLines += 1; // tax
+    totalLines += taxAmounts.filter(t => t.amount > 0).length; // taxes
+    totalLines += extraCharges.filter(c => parseFloat(c.amount) > 0).length; // extra charges
     if (tip > 0) totalLines += 1;
     totalLines += 1; // divider
     totalLines += 1; // total
@@ -177,7 +252,16 @@ export default function ReceiptGeneratorPage() {
     dashed();
     row("Subtotal:", `${sym}${fmt(subtotal)}`);
     if (discountAmt > 0) row("Discount:", `-${sym}${fmt(discountAmt)}`);
-    row(`${taxLabel} (${taxRate}%):`, `${sym}${fmt(taxAmt)}`);
+    taxAmounts.forEach((t) => {
+      if (t.amount > 0) {
+        const lbl = t.type === "percent" ? `${t.label} (${t.rate}%):` : `${t.label}:`;
+        row(lbl, `${sym}${fmt(t.amount)}`);
+      }
+    });
+    extraCharges.forEach((c) => {
+      const amt = parseFloat(c.amount) || 0;
+      if (amt > 0) row(`${c.label || "Charge"}:`, `${sym}${fmt(amt)}`);
+    });
     if (tip > 0) row("Tip:", `${sym}${fmt(tip)}`);
     dashed();
     row("TOTAL:", `${sym}${fmt(grandTotal)}`, true);
@@ -219,7 +303,8 @@ ${items.map((it) => `<div class="row"><span>${it.description || "Item"} x${it.qt
 <div class="d"></div>
 <div class="row"><span>Subtotal</span><span>${sym}${fmt(subtotal)}</span></div>
 ${discountAmt > 0 ? `<div class="row"><span>Discount</span><span>-${sym}${fmt(discountAmt)}</span></div>` : ""}
-<div class="row"><span>${taxLabel} (${taxRate}%)</span><span>${sym}${fmt(taxAmt)}</span></div>
+${taxAmounts.filter(t => t.amount > 0).map(t => `<div class="row"><span>${t.label}${t.type === "percent" ? ` (${t.rate}%)` : ""}</span><span>${sym}${fmt(t.amount)}</span></div>`).join("")}
+${extraCharges.filter(c => (parseFloat(c.amount) || 0) > 0).map(c => `<div class="row"><span>${c.label || "Charge"}</span><span>${sym}${fmt(parseFloat(c.amount) || 0)}</span></div>`).join("")}
 ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></div>` : ""}
 <div class="d"></div>
 <div class="row total"><span>TOTAL</span><span>${sym}${fmt(grandTotal)}</span></div>
@@ -349,22 +434,76 @@ ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></di
               <button onClick={addItem} className="btn-secondary text-sm mt-2">+ Add Item</button>
             </div>
 
-            {/* Tax, Discount, Tip */}
+            {/* Taxes & Charges */}
             <div className="tool-card">
-              <h2 className="font-bold text-lg mb-4">Tax, Discount &amp; Tip</h2>
+              <h2 className="font-bold text-lg mb-4">Taxes &amp; Charges</h2>
+
+              {/* Tax presets */}
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Quick Presets</label>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => applyTaxPreset("gst18")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">GST 18%</button>
+                  <button onClick={() => applyTaxPreset("cgst_sgst")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">CGST+SGST</button>
+                  <button onClick={() => applyTaxPreset("vat20")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">VAT 20%</button>
+                  <button onClick={() => applyTaxPreset("sales_tax")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">Sales Tax 8.25%</button>
+                  <button onClick={() => applyTaxPreset("no_tax")} className="text-xs px-2.5 py-1 rounded border border-red-300 hover:border-red-500 hover:bg-red-50 text-red-600 transition-all cursor-pointer">No Tax</button>
+                </div>
+              </div>
+
+              {/* Tax rows */}
+              {taxes.length > 0 && (
+                <div className="mb-3">
+                  <label className="block text-sm font-medium mb-2">Tax Rows</label>
+                  {taxes.map((t) => (
+                    <div key={t.id} className="flex gap-2 mb-2 items-center">
+                      <input type="text" value={t.label} onChange={(e) => updateTax(t.id, "label", e.target.value)} className="input-field flex-1" placeholder="Tax label" />
+                      <input type="number" value={t.rate} onChange={(e) => updateTax(t.id, "rate", e.target.value)} className="input-field w-20" placeholder="Rate" min="0" step="0.01" />
+                      <button
+                        onClick={() => updateTax(t.id, "type", t.type === "percent" ? "amount" : "percent")}
+                        className="text-xs px-2 py-1.5 rounded border border-[var(--border)] hover:bg-[var(--muted-bg)] font-medium min-w-[32px] text-center cursor-pointer"
+                        title={t.type === "percent" ? "Percentage — click to switch to fixed amount" : "Fixed amount — click to switch to percentage"}
+                      >
+                        {t.type === "percent" ? "%" : sym}
+                      </button>
+                      <button onClick={() => removeTax(t.id)} className="text-red-500 hover:text-red-700 text-xl font-bold cursor-pointer" title="Remove">&times;</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button onClick={addTax} className="btn-secondary text-sm mb-4">+ Add Tax</button>
+
+              {/* Extra charges */}
+              <div className="border-t border-[var(--border)] pt-4 mt-2">
+                <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Extra Charge Presets</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <button onClick={() => addChargePreset("service")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">+ Service Charge</button>
+                  <button onClick={() => addChargePreset("delivery")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">+ Delivery Fee</button>
+                  <button onClick={() => addChargePreset("packaging")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">+ Packaging</button>
+                  <button onClick={() => addChargePreset("convenience")} className="text-xs px-2.5 py-1 rounded border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all cursor-pointer">+ Convenience Fee</button>
+                </div>
+                {extraCharges.length > 0 && (
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium mb-2">Extra Charges</label>
+                    {extraCharges.map((c) => (
+                      <div key={c.id} className="flex gap-2 mb-2 items-center">
+                        <input type="text" value={c.label} onChange={(e) => updateCharge(c.id, "label", e.target.value)} className="input-field flex-1" placeholder="Charge label" />
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-[var(--muted)]">{sym}</span>
+                          <input type="number" value={c.amount} onChange={(e) => updateCharge(c.id, "amount", e.target.value)} className="input-field w-24" placeholder="Amount" min="0" step="0.01" />
+                        </div>
+                        <button onClick={() => removeCharge(c.id)} className="text-red-500 hover:text-red-700 text-xl font-bold cursor-pointer" title="Remove">&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button onClick={addCharge} className="btn-secondary text-sm">+ Add Extra Charge</button>
+              </div>
+            </div>
+
+            {/* Discount & Tip */}
+            <div className="tool-card">
+              <h2 className="font-bold text-lg mb-4">Discount &amp; Tip</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tax Label</label>
-                  <select value={taxLabel} onChange={(e) => setTaxLabel(e.target.value)} className="input-field">
-                    <option>GST</option>
-                    <option>VAT</option>
-                    <option>Sales Tax</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tax Rate (%)</label>
-                  <input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} className="input-field" min="0" max="100" step="0.1" />
-                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Discount</label>
                   <div className="flex gap-2">
@@ -405,11 +544,10 @@ ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></di
                 receiptDate={receiptDate}
                 paymentMethod={paymentMethod}
                 items={items}
-                taxLabel={taxLabel}
-                taxRate={taxRate}
+                taxAmounts={taxAmounts}
+                extraCharges={extraCharges}
                 subtotal={subtotal}
                 discountAmt={discountAmt}
-                taxAmt={taxAmt}
                 tip={tip}
                 grandTotal={grandTotal}
                 sym={sym}
@@ -479,14 +617,16 @@ ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></di
 
 function ReceiptPreview({
   template, bizName, logoText, bizAddress, bizPhone, bizEmail, bizWebsite,
-  receiptNo, receiptDate, paymentMethod, items, taxLabel, taxRate,
-  subtotal, discountAmt, taxAmt, tip, grandTotal, sym, footerText, lineTotal,
+  receiptNo, receiptDate, paymentMethod, items, taxAmounts, extraCharges,
+  subtotal, discountAmt, tip, grandTotal, sym, footerText, lineTotal,
 }: {
   template: ReceiptTemplate;
   bizName: string; logoText: string; bizAddress: string; bizPhone: string;
   bizEmail: string; bizWebsite: string; receiptNo: string; receiptDate: string;
-  paymentMethod: string; items: ReceiptItem[]; taxLabel: string; taxRate: string;
-  subtotal: number; discountAmt: number; taxAmt: number; tip: number;
+  paymentMethod: string; items: ReceiptItem[];
+  taxAmounts: { label: string; amount: number; rate: string; type: string }[];
+  extraCharges: { id: number; label: string; amount: string }[];
+  subtotal: number; discountAmt: number; tip: number;
   grandTotal: number; sym: string; footerText: string;
   lineTotal: (item: ReceiptItem) => number;
 }) {
@@ -518,7 +658,8 @@ function ReceiptPreview({
         <div style={{ borderTop: "2px dashed #1a1a1a", margin: "6px 0" }} />
         <Row l="Subtotal" r={`${sym}${f(subtotal)}`} />
         {discountAmt > 0 && <Row l="Discount" r={`-${sym}${f(discountAmt)}`} />}
-        {parseFloat(taxRate) > 0 && <Row l={`${taxLabel} (${taxRate}%)`} r={`${sym}${f(taxAmt)}`} />}
+        {taxAmounts.map((t, i) => t.amount > 0 && <Row key={i} l={t.type === "percent" ? `${t.label} (${t.rate}%)` : t.label} r={`${sym}${f(t.amount)}`} />)}
+        {extraCharges.map((c, i) => (parseFloat(c.amount) || 0) > 0 && <Row key={`ec${i}`} l={c.label || "Charge"} r={`${sym}${f(parseFloat(c.amount) || 0)}`} />)}
         {tip > 0 && <Row l="Tip" r={`${sym}${f(tip)}`} />}
         <div style={{ borderTop: "2px dashed #1a1a1a", margin: "6px 0" }} />
         <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 14, padding: "2px 0" }}>
@@ -552,7 +693,8 @@ function ReceiptPreview({
           <div style={{ borderTop: "1px solid #e5e7eb", margin: "10px 0" }} />
           <Row l="Subtotal" r={`${sym}${f(subtotal)}`} />
           {discountAmt > 0 && <Row l="Discount" r={`-${sym}${f(discountAmt)}`} color="#16a34a" />}
-          {parseFloat(taxRate) > 0 && <Row l={`${taxLabel} (${taxRate}%)`} r={`${sym}${f(taxAmt)}`} />}
+          {taxAmounts.map((t, i) => t.amount > 0 && <Row key={i} l={t.type === "percent" ? `${t.label} (${t.rate}%)` : t.label} r={`${sym}${f(t.amount)}`} />)}
+          {extraCharges.map((c, i) => (parseFloat(c.amount) || 0) > 0 && <Row key={`ec${i}`} l={c.label || "Charge"} r={`${sym}${f(parseFloat(c.amount) || 0)}`} />)}
           {tip > 0 && <Row l="Tip" r={`${sym}${f(tip)}`} />}
           <div style={{ borderTop: "2px solid #2563eb", margin: "8px 0" }} />
           <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16 }}>
@@ -585,7 +727,8 @@ function ReceiptPreview({
         <div style={{ borderTop: "1px solid #d1d5db", margin: "10px 0" }} />
         <Row l="Subtotal" r={`${sym}${f(subtotal)}`} />
         {discountAmt > 0 && <Row l="Discount" r={`-${sym}${f(discountAmt)}`} />}
-        {parseFloat(taxRate) > 0 && <Row l={`${taxLabel} (${taxRate}%)`} r={`${sym}${f(taxAmt)}`} />}
+        {taxAmounts.map((t, i) => t.amount > 0 && <Row key={i} l={t.type === "percent" ? `${t.label} (${t.rate}%)` : t.label} r={`${sym}${f(t.amount)}`} />)}
+        {extraCharges.map((c, i) => (parseFloat(c.amount) || 0) > 0 && <Row key={`ec${i}`} l={c.label || "Charge"} r={`${sym}${f(parseFloat(c.amount) || 0)}`} />)}
         {tip > 0 && <Row l="Tip" r={`${sym}${f(tip)}`} />}
         <div style={{ borderTop: "1px solid #d1d5db", margin: "8px 0" }} />
         <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 14 }}>
@@ -639,7 +782,8 @@ function ReceiptPreview({
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: 11 }}>
           <Row l="Subtotal" r={`${sym}${f(subtotal)}`} />
           {discountAmt > 0 && <Row l="Discount" r={`-${sym}${f(discountAmt)}`} />}
-          {parseFloat(taxRate) > 0 && <Row l={`${taxLabel} (${taxRate}%)`} r={`${sym}${f(taxAmt)}`} />}
+          {taxAmounts.map((t, i) => t.amount > 0 && <Row key={i} l={t.type === "percent" ? `${t.label} (${t.rate}%)` : t.label} r={`${sym}${f(t.amount)}`} />)}
+          {extraCharges.map((c, i) => (parseFloat(c.amount) || 0) > 0 && <Row key={`ec${i}`} l={c.label || "Charge"} r={`${sym}${f(parseFloat(c.amount) || 0)}`} />)}
           {tip > 0 && <Row l="Tip" r={`${sym}${f(tip)}`} />}
           <div style={{ borderTop: "2px solid #111827", width: "100%", margin: "6px 0" }} />
           <div style={{ display: "flex", justifyContent: "space-between", width: "100%", fontWeight: 700, fontSize: 14 }}>
@@ -677,7 +821,8 @@ function ReceiptPreview({
           <div style={{ borderTop: "1px solid #e5e7eb", margin: "8px 0" }} />
           <Row l="Subtotal" r={`${sym}${f(subtotal)}`} />
           {discountAmt > 0 && <Row l="Discount" r={`-${sym}${f(discountAmt)}`} />}
-          {parseFloat(taxRate) > 0 && <Row l={`${taxLabel} (${taxRate}%)`} r={`${sym}${f(taxAmt)}`} />}
+          {taxAmounts.map((t, i) => t.amount > 0 && <Row key={i} l={t.type === "percent" ? `${t.label} (${t.rate}%)` : t.label} r={`${sym}${f(t.amount)}`} />)}
+          {extraCharges.map((c, i) => (parseFloat(c.amount) || 0) > 0 && <Row key={`ec${i}`} l={c.label || "Charge"} r={`${sym}${f(parseFloat(c.amount) || 0)}`} />)}
           {tip > 0 && <Row l="Tip" r={`${sym}${f(tip)}`} />}
           <div style={{ borderTop: "1px solid #e5e7eb", margin: "8px 0" }} />
           <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}>
@@ -721,7 +866,8 @@ function ReceiptPreview({
       <div style={{ borderTop: "1px solid #d6d3d1", margin: "8px 0" }} />
       <Row l="Subtotal" r={`${sym}${f(subtotal)}`} />
       {discountAmt > 0 && <Row l="Discount" r={`-${sym}${f(discountAmt)}`} />}
-      {parseFloat(taxRate) > 0 && <Row l={`${taxLabel} (${taxRate}%)`} r={`${sym}${f(taxAmt)}`} />}
+      {taxAmounts.map((t, i) => t.amount > 0 && <Row key={i} l={t.type === "percent" ? `${t.label} (${t.rate}%)` : t.label} r={`${sym}${f(t.amount)}`} />)}
+      {extraCharges.map((c, i) => (parseFloat(c.amount) || 0) > 0 && <Row key={`ec${i}`} l={c.label || "Charge"} r={`${sym}${f(parseFloat(c.amount) || 0)}`} />)}
       {/* Tip line */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 12 }}>
         <span>Tip</span>
