@@ -1,26 +1,244 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #dbeafe;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --muted: #64748b;
+  --muted-bg: #f1f5f9;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #1e3a5f;
+  --card: #1e293b;
+  --card-border: #334155;
+  --muted: #94a3b8;
+  --muted-bg: #1e293b;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-muted: var(--muted);
+  --color-muted-bg: var(--muted-bg);
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.tool-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.tool-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.15s;
+  cursor: pointer;
+  border: none;
+  font-size: 0.9375rem;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--muted-bg);
+  color: var(--foreground);
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.15s;
+  cursor: pointer;
+  border: 1px solid var(--card-border);
+  font-size: 0.9375rem;
+}
+
+.btn-secondary:hover {
+  background: var(--card-border);
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.result-card {
+  background: var(--primary-light);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.ad-placeholder {
+  background: var(--muted-bg);
+  border: 1px dashed var(--card-border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.seo-content h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--foreground);
+}
+
+.seo-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.seo-content p {
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 0.75rem;
+}
+
+.seo-content ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 0.75rem;
+}
+
+.seo-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.seo-content table th,
+.seo-content table td {
+  border: 1px solid var(--card-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.9375rem;
+}
+
+.seo-content table th {
+  background: var(--muted-bg);
+  font-weight: 600;
+}
+
+/* Dark mode overrides for Tailwind hardcoded colors */
+.dark .bg-green-50 { background: #052e16 !important; }
+.dark .bg-blue-50 { background: #0c1e3a !important; }
+.dark .bg-red-50 { background: #2c0b0e !important; }
+.dark .bg-purple-50 { background: #1e0a30 !important; }
+.dark .bg-gray-50 { background: var(--card) !important; }
+.dark .bg-pink-50 { background: #2c0b1e !important; }
+.dark .bg-amber-50 { background: #2c1d06 !important; }
+.dark .bg-cyan-50 { background: #062c2c !important; }
+
+.dark .text-green-700 { color: #4ade80 !important; }
+.dark .text-blue-700 { color: #60a5fa !important; }
+.dark .text-red-700 { color: #f87171 !important; }
+.dark .text-purple-700 { color: #c084fc !important; }
+.dark .text-gray-700 { color: #cbd5e1 !important; }
+.dark .text-pink-700 { color: #f472b6 !important; }
+.dark .text-amber-700 { color: #fbbf24 !important; }
+.dark .text-cyan-700 { color: #22d3ee !important; }
+
+.dark .border-green-200 { border-color: #166534 !important; }
+.dark .border-blue-200 { border-color: #1e3a5f !important; }
+.dark .border-red-200 { border-color: #7f1d1d !important; }
+.dark .border-purple-200 { border-color: #581c87 !important; }
+.dark .border-gray-200 { border-color: var(--card-border) !important; }
+.dark .border-pink-200 { border-color: #831843 !important; }
+.dark .border-amber-200 { border-color: #78350f !important; }
+.dark .border-cyan-200 { border-color: #155e75 !important; }
+
+/* Dark mode text colors */
+.dark .text-gray-900 { color: #f1f5f9 !important; }
+.dark .text-gray-800 { color: #e2e8f0 !important; }
+.dark .text-gray-600 { color: #94a3b8 !important; }
+.dark .text-gray-500 { color: #64748b !important; }
+.dark .text-gray-400 { color: #64748b !important; }
+
+/* Dark mode backgrounds for tool pages */
+.dark .bg-white { background: var(--card) !important; }
+.dark .bg-gray-100 { background: var(--muted-bg) !important; }
+
+/* Dark mode for select, textarea, inputs */
+.dark select, .dark textarea, .dark input {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--card-border) !important;
 }
