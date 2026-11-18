@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 import CurrencySelector from "@/components/CurrencySelector";
+import LogoUploader from "@/components/LogoUploader";
 import { type Currency, CURRENCIES, getCurrencyFromStorage } from "@/lib/currency";
 
 const META = {
@@ -46,6 +47,7 @@ function genReceiptNumber(): string {
 export default function ReceiptGeneratorPage() {
   const [displayCurrency, setDisplayCurrency] = useState<Currency>(CURRENCIES[0]);
   const [bizName, setBizName] = useState("");
+  const [logoImage, setLogoImage] = useState<string | null>(null);
   const [logoText, setLogoText] = useState("");
   const [bizAddress, setBizAddress] = useState("");
   const [bizPhone, setBizPhone] = useState("");
@@ -348,8 +350,11 @@ ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></di
                   <label className="block text-sm font-medium mb-1">Business Name</label>
                   <input type="text" value={bizName} onChange={(e) => setBizName(e.target.value)} className="input-field" placeholder="My Store" />
                 </div>
+                <div className="sm:col-span-2">
+                  <LogoUploader onLogoChange={setLogoImage} recommendedSize="150×150px" shape="square" maxWidth={150} maxHeight={150} />
+                </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Logo Text (Initials)</label>
+                  <label className="block text-sm font-medium mb-1">OR Logo Text (Initials)</label>
                   <input type="text" value={logoText} onChange={(e) => setLogoText(e.target.value)} className="input-field" placeholder="MS" maxLength={4} />
                 </div>
                 <div className="sm:col-span-2">
@@ -536,6 +541,7 @@ ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></di
                 template={receiptTemplate}
                 bizName={bizName}
                 logoText={logoText}
+                logoImage={logoImage}
                 bizAddress={bizAddress}
                 bizPhone={bizPhone}
                 bizEmail={bizEmail}
@@ -616,12 +622,12 @@ ${tip > 0 ? `<div class="row"><span>Tip</span><span>${sym}${fmt(tip)}</span></di
    ============================================================ */
 
 function ReceiptPreview({
-  template, bizName, logoText, bizAddress, bizPhone, bizEmail, bizWebsite,
+  template, bizName, logoText, logoImage, bizAddress, bizPhone, bizEmail, bizWebsite,
   receiptNo, receiptDate, paymentMethod, items, taxAmounts, extraCharges,
   subtotal, discountAmt, tip, grandTotal, sym, footerText, lineTotal,
 }: {
   template: ReceiptTemplate;
-  bizName: string; logoText: string; bizAddress: string; bizPhone: string;
+  bizName: string; logoText: string; logoImage: string | null; bizAddress: string; bizPhone: string;
   bizEmail: string; bizWebsite: string; receiptNo: string; receiptDate: string;
   paymentMethod: string; items: ReceiptItem[];
   taxAmounts: { label: string; amount: number; rate: string; type: string }[];
@@ -640,6 +646,7 @@ function ReceiptPreview({
     return (
       <div style={{ ...mono, width: 280, background: "#fefefe", padding: "20px 14px", border: "1px solid #e5e5e5", borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", fontSize: 12, color: "#1a1a1a" }}>
         <div style={{ textAlign: "center", marginBottom: 6 }}>
+          {logoImage && <img src={logoImage} alt="Logo" style={{ width: 50, height: 50, margin: "0 auto 8px", borderRadius: 4, objectFit: "contain" }} />}
           <div style={{ fontSize: 16, fontWeight: 700 }}>{store}</div>
           {bizAddress && <div style={{ fontSize: 10 }}>{bizAddress}</div>}
           {bizPhone && <div style={{ fontSize: 10 }}>{bizPhone}</div>}
@@ -675,6 +682,7 @@ function ReceiptPreview({
     return (
       <div style={{ width: 320, background: "#fff", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.1)", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, color: "#1f2937" }}>
         <div style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)", padding: "16px 20px", color: "#fff" }}>
+          {logoImage && <img src={logoImage} alt="Logo" style={{ width: 44, height: 44, marginBottom: 6, borderRadius: 4, objectFit: "contain", background: "rgba(255,255,255,0.15)" }} />}
           <div style={{ fontSize: 18, fontWeight: 700 }}>{store}</div>
           {bizAddress && <div style={{ fontSize: 10, opacity: 0.85, marginTop: 2 }}>{bizAddress}</div>}
           {bizPhone && <div style={{ fontSize: 10, opacity: 0.85 }}>{bizPhone}</div>}
@@ -711,6 +719,7 @@ function ReceiptPreview({
     return (
       <div style={{ width: 300, background: "#fff", padding: "24px 20px", border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, color: "#374151" }}>
         <div style={{ textAlign: "center", marginBottom: 12 }}>
+          {logoImage && <img src={logoImage} alt="Logo" style={{ width: 44, height: 44, margin: "0 auto 8px", borderRadius: 4, objectFit: "contain" }} />}
           <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: 1 }}>{store}</div>
           <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 4 }}>{[bizAddress, bizPhone].filter(Boolean).join(" | ")}</div>
         </div>
@@ -746,6 +755,7 @@ function ReceiptPreview({
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
           <div>
+            {logoImage && <img src={logoImage} alt="Logo" style={{ width: 44, height: 44, marginBottom: 6, borderRadius: 4, objectFit: "contain" }} />}
             <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>{store}</div>
             {bizAddress && <div style={{ fontSize: 9, color: "#6b7280" }}>{bizAddress}</div>}
             {bizPhone && <div style={{ fontSize: 9, color: "#6b7280" }}>{bizPhone}</div>}
@@ -802,9 +812,13 @@ function ReceiptPreview({
       <div style={{ width: 310, background: "#fff", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 12, color: "#1f2937" }}>
         {/* Logo area */}
         <div style={{ background: "#1e293b", padding: "18px 20px", textAlign: "center", color: "#fff" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: "50%", border: "2px solid #fff", fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-            {initials}
-          </div>
+          {logoImage ? (
+            <img src={logoImage} alt="Logo" style={{ width: 44, height: 44, margin: "0 auto 4px", borderRadius: 4, objectFit: "contain", background: "rgba(255,255,255,0.1)" }} />
+          ) : (
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: "50%", border: "2px solid #fff", fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
+              {initials}
+            </div>
+          )}
           <div style={{ fontSize: 16, fontWeight: 700 }}>{store}</div>
           {bizAddress && <div style={{ fontSize: 9, opacity: 0.8 }}>{bizAddress}</div>}
         </div>
@@ -848,6 +862,7 @@ function ReceiptPreview({
   return (
     <div style={{ width: 300, background: "#fffbf0", padding: "20px 16px", borderRadius: 6, border: "1px solid #e5d9c3", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", fontFamily: "'Georgia', serif", fontSize: 12, color: "#44403c" }}>
       <div style={{ textAlign: "center", marginBottom: 8 }}>
+        {logoImage && <img src={logoImage} alt="Logo" style={{ width: 44, height: 44, margin: "0 auto 6px", borderRadius: 4, objectFit: "contain" }} />}
         <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: 1, color: "#292524" }}>{store}</div>
         {bizAddress && <div style={{ fontSize: 9, fontStyle: "italic" }}>{bizAddress}</div>}
         {bizPhone && <div style={{ fontSize: 9 }}>{bizPhone}</div>}

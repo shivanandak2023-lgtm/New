@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
+import LogoUploader from "@/components/LogoUploader";
 
 const META = {
   title: "Free Business Card Generator - Design & Download Cards",
@@ -51,6 +52,8 @@ export default function BusinessCardGeneratorPage() {
   const [address, setAddress] = useState("");
   const [tagline, setTagline] = useState("");
 
+  const [logoImage, setLogoImage] = useState<string | null>(null);
+
   const [template, setTemplate] = useState<Template>("corporate-blue");
   const [customColor, setCustomColor] = useState("#1e40af");
   const [fontStyle, setFontStyle] = useState<FontStyle>("sans");
@@ -65,7 +68,7 @@ export default function BusinessCardGeneratorPage() {
   }
 
   const renderCard = useCallback(
-    (ctx: CanvasRenderingContext2D, w: number, h: number, isFront: boolean) => {
+    (ctx: CanvasRenderingContext2D, w: number, h: number, isFront: boolean, onReady?: () => void) => {
       const font = FONT_MAP[fontStyle];
       const name = cardName || "Your Name";
       const jobTitle = title || "Job Title";
@@ -76,8 +79,29 @@ export default function BusinessCardGeneratorPage() {
 
       if (!isFront) {
         renderBack(ctx, w, h, font, comp, cardWebsite, tagline, accent, template);
+        onReady?.();
         return;
       }
+
+      const drawLogo = (callback: () => void) => {
+        if (logoImage && isFront) {
+          const img = new Image();
+          img.onload = () => {
+            // Draw logo in top-right area
+            const logoW = Math.min(img.width, 140);
+            const logoH = Math.min(img.height, 70);
+            const ratio = Math.min(logoW / img.width, logoH / img.height);
+            const dw = img.width * ratio;
+            const dh = img.height * ratio;
+            ctx.drawImage(img, w - dw - 40, 40, dw, dh);
+            callback();
+          };
+          img.onerror = () => callback();
+          img.src = logoImage;
+        } else {
+          callback();
+        }
+      };
 
       switch (template) {
         case "corporate-blue":
@@ -105,8 +129,10 @@ export default function BusinessCardGeneratorPage() {
           renderLuxuryGold(ctx, w, h, font, name, jobTitle, comp, cardEmail, cardPhone, cardWebsite, address, accent);
           break;
       }
+
+      drawLogo(() => onReady?.());
     },
-    [cardName, title, company, cardEmail, cardPhone, cardWebsite, address, tagline, template, customColor, fontStyle]
+    [cardName, title, company, cardEmail, cardPhone, cardWebsite, address, tagline, template, customColor, fontStyle, logoImage]
   );
 
   function downloadCard() {
@@ -115,11 +141,12 @@ export default function BusinessCardGeneratorPage() {
     canvas.height = 600;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    renderCard(ctx, 1050, 600, !showBack);
-    const link = document.createElement("a");
-    link.download = `business-card-${showBack ? "back" : "front"}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    renderCard(ctx, 1050, 600, !showBack, () => {
+      const link = document.createElement("a");
+      link.download = `business-card-${showBack ? "back" : "front"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
   }
 
   function handlePrint() {
@@ -128,12 +155,13 @@ export default function BusinessCardGeneratorPage() {
     canvas.height = 600;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    renderCard(ctx, 1050, 600, !showBack);
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(`<html><title>Business Card</title><style>*{margin:0;padding:0}body{display:flex;justify-content:center;align-items:center;min-height:100vh}img{max-width:100%}@media print{body{padding:0}}</style><body><img src="${canvas.toDataURL("image/png")}" /></body></html>`);
-    win.document.close();
-    setTimeout(() => win.print(), 300);
+    renderCard(ctx, 1050, 600, !showBack, () => {
+      const win = window.open("", "_blank");
+      if (!win) return;
+      win.document.write(`<html><title>Business Card</title><style>*{margin:0;padding:0}body{display:flex;justify-content:center;align-items:center;min-height:100vh}img{max-width:100%}@media print{body{padding:0}}</style><body><img src="${canvas.toDataURL("image/png")}" /></body></html>`);
+      win.document.close();
+      setTimeout(() => win.print(), 300);
+    });
   }
 
   return (
@@ -192,6 +220,9 @@ export default function BusinessCardGeneratorPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">Tagline / Slogan</label>
                   <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="input-field" placeholder="Innovation at scale" />
+                </div>
+                <div className="sm:col-span-2">
+                  <LogoUploader onLogoChange={setLogoImage} recommendedSize="200×100px (landscape)" shape="rectangle" maxWidth={200} maxHeight={100} />
                 </div>
               </div>
             </div>
@@ -262,6 +293,7 @@ export default function BusinessCardGeneratorPage() {
                 accent={customColor}
                 fontStyle={fontStyle}
                 showBack={showBack}
+                logoImage={logoImage}
               />
             </div>
 
@@ -681,11 +713,11 @@ function renderLuxuryGold(
 
 function CardPreview({
   name, title, company, email, phone, website, address, tagline,
-  template, accent, fontStyle, showBack,
+  template, accent, fontStyle, showBack, logoImage,
 }: {
   name: string; title: string; company: string; email: string; phone: string;
   website: string; address: string; tagline: string; template: Template;
-  accent: string; fontStyle: FontStyle; showBack: boolean;
+  accent: string; fontStyle: FontStyle; showBack: boolean; logoImage: string | null;
 }) {
   const font = FONT_MAP[fontStyle];
   const monoFont = "'SF Mono', 'Consolas', 'Monaco', monospace";
@@ -720,11 +752,17 @@ function CardPreview({
     );
   }
 
+  // Logo element for front of card
+  const logoEl = logoImage ? (
+    <img src={logoImage} alt="Logo" style={{ position: "absolute", top: 10, right: 12, width: 48, height: 24, objectFit: "contain", borderRadius: 2 }} />
+  ) : null;
+
   // 1. Corporate Blue
   if (template === "corporate-blue") {
     return (
       <div style={{ ...baseStyle, background: "#fff" }}>
-        <div style={{ background: `linear-gradient(90deg, ${accent}, #3b82f6)`, padding: "14px 16px", color: "#fff" }}>
+        <div style={{ background: `linear-gradient(90deg, ${accent}, #3b82f6)`, padding: "14px 16px", color: "#fff", position: "relative" }}>
+          {logoEl}
           <div style={{ fontSize: "16px", fontWeight: 700 }}>{dn}</div>
           <div style={{ fontSize: "10px", marginTop: 2 }}>{dt}</div>
           <div style={{ fontSize: "8px", marginTop: 2, opacity: 0.85 }}>{dc}</div>
@@ -741,6 +779,7 @@ function CardPreview({
     return (
       <div style={{ ...baseStyle, background: "#1a1a2e", color: "#fff" }}>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: accent }} />
+        {logoEl}
         <div style={{ padding: "24px 16px 10px", display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
           <div style={{ fontSize: "16px", fontWeight: 700 }}>{dn}</div>
           <div style={{ fontSize: "10px", color: accent, marginTop: 2 }}>{dt}</div>
@@ -758,6 +797,7 @@ function CardPreview({
     return (
       <div style={{ ...baseStyle, background: `linear-gradient(135deg, ${accent}, #2563eb)`, color: "#fff", position: "relative" }}>
         <div style={{ position: "absolute", right: -30, bottom: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
+        {logoEl}
         <div style={{ padding: "22px 16px", position: "relative", zIndex: 1 }}>
           <div style={{ fontSize: "17px", fontWeight: 700 }}>{dn}</div>
           <div style={{ fontSize: "10px", marginTop: 2, opacity: 0.9 }}>{dt}</div>
@@ -775,6 +815,7 @@ function CardPreview({
     return (
       <div style={{ ...baseStyle, background: "#fff" }}>
         <div style={{ position: "absolute", inset: 10, border: "1px solid #d1d5db", borderRadius: 4 }} />
+        {logoEl}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: 16, textAlign: "center", position: "relative" }}>
           <div style={{ fontSize: "15px", fontWeight: 300, color: "#111827" }}>{dn}</div>
           <div style={{ fontSize: "8px", color: accent, marginTop: 3 }}>{dt}{dc ? ` | ${dc}` : ""}</div>
@@ -793,6 +834,7 @@ function CardPreview({
         <div style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0, borderLeft: `40px solid ${accent}`, borderBottom: "40px solid transparent" }} />
         <div style={{ position: "absolute", bottom: 0, right: 0, width: 0, height: 0, borderRight: `40px solid ${accent}`, borderTop: "40px solid transparent" }} />
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: accent }} />
+        {logoEl}
         <div style={{ padding: "22px 16px", position: "relative" }}>
           <div style={{ fontSize: "16px", fontWeight: 700, color: "#14532d" }}>{dn}</div>
           <div style={{ fontSize: "10px", color: accent, marginTop: 2 }}>{dt}</div>
@@ -811,6 +853,7 @@ function CardPreview({
       <div style={{ ...baseStyle, background: "#fafafa", position: "relative" }}>
         <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 5, background: accent }} />
         <div style={{ position: "absolute", left: 5, top: 0, right: 0, height: 2, background: accent }} />
+        {logoEl}
         <div style={{ padding: "20px 16px 10px 20px" }}>
           <div style={{ fontSize: "17px", fontWeight: 700, color: "#111827" }}>{dn}</div>
           <div style={{ fontSize: "10px", fontWeight: 700, color: accent, marginTop: 2 }}>{dt}</div>
@@ -829,6 +872,7 @@ function CardPreview({
     return (
       <div style={{ ...baseStyle, background: "#1e1e2a", fontFamily: monoFont }}>
         <div style={{ position: "absolute", inset: 6, border: "2px dashed #06b6d4", borderRadius: 4 }} />
+        {logoEl}
         {/* Dots */}
         <div style={{ position: "absolute", right: 20, top: 30 }}>
           {[0, 1, 2, 3].map((i) => (
@@ -852,6 +896,7 @@ function CardPreview({
     <div style={{ ...baseStyle, background: "#0a0a0a" }}>
       <div style={{ position: "absolute", inset: 7, border: `1px solid ${accent}`, borderRadius: 2 }} />
       <div style={{ position: "absolute", inset: 10, border: `1px solid ${accent}`, borderRadius: 2 }} />
+      {logoEl}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: 16, textAlign: "center", position: "relative" }}>
         <div style={{ fontSize: "16px", fontWeight: 700, color: accent }}>{dn}</div>
         <div style={{ fontSize: "9px", color: accent, marginTop: 3 }}>{dt}</div>

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
+import LogoUploader from "@/components/LogoUploader";
 
 const META = {
   title: "Free Resume Builder - Create & Download Professional Resume",
@@ -110,7 +111,7 @@ function ResumePreview({
     firstName: string; lastName: string; jobTitle: string; email: string; phone: string;
     city: string; country: string; linkedin: string; website: string; summary: string;
     work: WorkExperience[]; education: Education[]; skills: string[];
-    languages: Language[]; certifications: Certification[];
+    languages: Language[]; certifications: Certification[]; photoImage: string | null;
   };
   template: TemplateName;
   primaryColor: string;
@@ -165,6 +166,11 @@ function ResumePreview({
         <div style={{ display: "flex", minHeight: "297mm" }}>
           {/* Sidebar */}
           <div style={{ width: "35%", background: pc, color: "#fff", padding: "30px 20px" }}>
+            {data.photoImage && (
+              <div style={{ textAlign: "center", marginBottom: "16px" }}>
+                <img src={data.photoImage} alt="Photo" style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.3)" }} />
+              </div>
+            )}
             <div style={{ fontSize: "22px", fontWeight: 800, marginBottom: "2px", lineHeight: 1.2 }}>{fullName}</div>
             {data.jobTitle && <div style={{ fontSize: "12px", opacity: 0.85, marginBottom: "20px", fontStyle: "italic" }}>{data.jobTitle}</div>}
             <div style={{ fontSize: "10px", lineHeight: 1.8, marginBottom: "24px" }}>
@@ -291,10 +297,17 @@ function ResumePreview({
     <div style={baseStyle} className="resume-print-area">
       {/* Header */}
       <div style={headerStyles[template]}>
-        <div style={nameStyles[template]}>{fullName}</div>
-        {data.jobTitle && <div style={jobTitleStyle[template]}>{data.jobTitle}</div>}
-        <div style={contactStyle[template]}>
-          {contactParts.length > 0 ? contactParts.join("  |  ") : "your@email.com  |  +1 234 567 890"}
+        <div style={{ display: "flex", alignItems: "center", gap: data.photoImage ? "16px" : "0" }}>
+          {data.photoImage && (
+            <img src={data.photoImage} alt="Photo" style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.3)", flexShrink: 0 }} />
+          )}
+          <div>
+            <div style={nameStyles[template]}>{fullName}</div>
+            {data.jobTitle && <div style={jobTitleStyle[template]}>{data.jobTitle}</div>}
+            <div style={contactStyle[template]}>
+              {contactParts.length > 0 ? contactParts.join("  |  ") : "your@email.com  |  +1 234 567 890"}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -394,6 +407,7 @@ function ResumePreview({
 // ===================== MAIN PAGE =====================
 export default function ResumeBuilderPage() {
   // --- Personal Info ---
+  const [photoImage, setPhotoImage] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
@@ -475,8 +489,8 @@ export default function ResumeBuilderPage() {
 
   const resumeData = useMemo(() => ({
     firstName, lastName, jobTitle, email, phone, city, country, linkedin, website, summary,
-    work: workList, education: eduList, skills, languages, certifications,
-  }), [firstName, lastName, jobTitle, email, phone, city, country, linkedin, website, summary, workList, eduList, skills, languages, certifications]);
+    work: workList, education: eduList, skills, languages, certifications, photoImage,
+  }), [firstName, lastName, jobTitle, email, phone, city, country, linkedin, website, summary, workList, eduList, skills, languages, certifications, photoImage]);
 
   // --- Print/Export ---
   const handlePrintPDF = useCallback(() => {
@@ -691,6 +705,10 @@ export default function ResumeBuilderPage() {
                   <div>
                     <label className="block text-xs font-medium mb-1">Website</label>
                     <input type="text" value={website} onChange={(e) => setWebsite(e.target.value)} className="input-field" placeholder="johndoe.com" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium mb-2">Profile Photo (Optional)</label>
+                    <LogoUploader onLogoChange={setPhotoImage} recommendedSize="150×150px (passport size)" shape="circle" maxWidth={150} maxHeight={150} />
                   </div>
                 </div>
               </div>
