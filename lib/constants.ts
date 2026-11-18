@@ -197,4 +197,16 @@ export const TOOLS: Tool[] = [
   { name: "Calendar", slug: "calendar", description: "Monthly calendar with week numbers, date info, and mini 3-month view", category: "generators", icon: "📅", keywords: ["calendar", "monthly calendar", "week numbers", "day of year", "online calendar"] },
   { name: "Notepad", slug: "notepad", description: "Online notepad with auto-save, multiple notes, word count, and Markdown preview", category: "generators", icon: "📝", keywords: ["notepad online", "text editor", "online notepad", "note taking", "auto save"] },
   { name: "To-Do List", slug: "todo-list", description: "Simple task manager with check/uncheck, reorder, filter, and auto-save", category: "generators", icon: "✅", keywords: ["todo list", "to do list", "task manager", "task list", "online todo"] },
+  // Document & Design Tools
+  { name: "Resume Builder", slug: "resume-builder", description: "Create professional resumes with live preview and multiple templates", category: "generators", icon: "📄", keywords: ["resume builder", "cv maker", "resume template", "free resume", "professional resume"] },
+  { name: "Signature Generator", slug: "signature-generator", description: "Create digital signatures with cursive fonts or freehand drawing", category: "generators", icon: "✍️", keywords: ["signature generator", "digital signature", "signature maker", "e-signature", "cursive signature"] },
+  { name: "Business Card Generator", slug: "business-card-generator", description: "Design professional business cards with customizable layouts and colors", category: "generators", icon: "💼", keywords: ["business card generator", "business card maker", "visiting card", "card designer", "business card template"] },
+  { name: "Receipt Generator", slug: "receipt-generator", description: "Create realistic thermal-style receipts with itemized billing and tax", category: "generators", icon: "🧾", keywords: ["receipt generator", "receipt maker", "bill generator", "receipt template", "store receipt"] },
+  // Health & Lifestyle Tools
+  { name: "Steps to KM Converter", slug: "steps-to-km", description: "Convert steps to kilometers, miles, and calories burned with goal tracking", category: "health", icon: "🚶", keywords: ["steps to km", "steps to kilometers", "step counter", "steps to miles", "walking distance calculator", "calories burned walking"] },
+  // Text & Reference Tools
+  { name: "Slang Dictionary", slug: "slang-dictionary", description: "Look up 200+ internet and Gen-Z slang terms with meanings and examples", category: "text", icon: "🗣️", keywords: ["slang dictionary", "gen z slang", "internet slang", "slang meanings", "social media slang", "texting slang"] },
+  // Generator Tools
+  { name: "WiFi QR Code Generator", slug: "wifi-qr-generator", description: "Generate a QR code to share your WiFi network with guests instantly", category: "generators", icon: "📶", keywords: ["wifi qr code", "wifi qr generator", "share wifi", "wifi qr code generator", "connect wifi qr"] },
+  { name: "Handwriting Generator", slug: "handwriting-generator", description: "Create handwriting-style text with Google Fonts on notebook paper backgrounds", category: "generators", icon: "✍️", keywords: ["handwriting generator", "handwriting font", "handwritten text", "fake handwriting", "notebook paper generator"] },
 ];
