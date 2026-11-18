@@ -32,6 +32,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  verification: {
+    google: "y57G6nLBo9ZChVHs-RlsLKvB_bssXH2tzuazZ5fs7Lw",
+  },
 };
 
 const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "";
