@@ -139,13 +139,7 @@ input[type="number"] {
 }
 
 .ad-placeholder {
-  background: var(--muted-bg);
-  border: 1px dashed var(--card-border);
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.875rem;
+  display: none;
 }
 
 .seo-content h2 {
