@@ -22,6 +22,7 @@ export const CATEGORIES = [
   { name: "Converters", slug: "converters", icon: "🔄", color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
   { name: "File Converter", slug: "file", icon: "📁", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
   { name: "Network", slug: "network", icon: "🌐", color: "bg-teal-50 text-teal-700 border-teal-200" },
+  { name: "Home Improvement", slug: "home", icon: "🏠", color: "bg-orange-50 text-orange-700 border-orange-200" },
 ];
 
 export const TOOLS: Tool[] = [
@@ -228,4 +229,11 @@ export const TOOLS: Tool[] = [
   // Canada Finance Tools
   { name: "RRSP Calculator", slug: "canada-rrsp-calculator", description: "Project Canadian RRSP retirement savings growth and tax savings", category: "finance", icon: "🇨🇦", keywords: ["RRSP calculator Canada", "retirement savings calculator Canada", "RRSP contribution", "RRSP tax savings", "registered retirement savings"] },
   { name: "TFSA Calculator", slug: "canada-tfsa-calculator", description: "Calculate tax-free savings growth in a Canadian TFSA with contribution room tracking", category: "finance", icon: "🇨🇦", keywords: ["TFSA calculator Canada", "tax free savings calculator", "TFSA contribution room", "TFSA growth", "tax free savings account"] },
+  // Home Improvement Tools
+  { name: "Soil Calculator", slug: "soil-calculator", description: "Calculate how much topsoil, garden soil, or compost you need in cubic yards and bags", category: "home", icon: "🌱", keywords: ["soil calculator", "topsoil calculator cubic yards", "how much soil do I need", "garden soil calculator", "raised bed soil"] },
+  { name: "Drywall Calculator", slug: "drywall-calculator", description: "Calculate sheets of drywall, joint tape, compound, and screws for any room", category: "home", icon: "🧱", keywords: ["drywall calculator", "how many sheets of drywall", "drywall calculator for room", "sheetrock calculator", "drywall estimator"] },
+  { name: "Flooring Calculator", slug: "flooring-calculator", description: "Estimate flooring square footage, boxes, underlayment, and cost for any room", category: "home", icon: "🪵", keywords: ["flooring calculator", "how much flooring do I need", "flooring calculator square feet", "hardwood flooring calculator", "laminate calculator"] },
+  { name: "Pool Volume Calculator", slug: "pool-volume-calculator", description: "Calculate swimming pool volume in gallons with chemical and fill time estimates", category: "home", icon: "🏊", keywords: ["pool volume calculator", "pool gallon calculator", "how many gallons in my pool", "swimming pool calculator", "pool water volume"] },
+  { name: "Roofing Calculator", slug: "roof-calculator", description: "Calculate roof area, shingles, bundles, and cost based on dimensions and pitch", category: "home", icon: "🏗️", keywords: ["roof calculator", "roofing calculator", "how many shingles do I need", "roofing squares calculator", "roof pitch calculator"] },
+  { name: "Stair Calculator", slug: "stair-calculator", description: "Calculate stair risers, treads, stringer length, and angle with code compliance", category: "home", icon: "🪜", keywords: ["stair calculator", "staircase calculator", "how to calculate stairs", "stair riser calculator", "stringer length"] },
 ];
