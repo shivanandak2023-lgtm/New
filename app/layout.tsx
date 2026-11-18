@@ -4,6 +4,7 @@ import { SITE_NAME, SITE_URL, SITE_DESCRIPTION } from "@/lib/constants";
 import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
 import ThemeToggle from "@/components/ThemeToggle";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export const metadata: Metadata = {
   title: {
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body className="min-h-full flex flex-col">
+        <GoogleAnalytics />
         <ThemeProvider>
         <header className="bg-[var(--card)] border-b border-[var(--card-border)] sticky top-0 z-50">
           <nav className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
