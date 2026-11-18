@@ -145,6 +145,13 @@ export default function ClipboardSharePage() {
       <meta name="description" content={META.description} />
       <meta name="keywords" content={META.keywords} />
       <link rel="canonical" href={`${SITE_URL}/tools/clipboard-share`} />
+        <meta property="og:title" content={META.title} />
+        <meta property="og:description" content={META.description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`/tools/clipboard-share`} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={META.title} />
+        <meta name="twitter:description" content={META.description} />
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <a href="/" className="text-[var(--primary)] hover:underline text-sm mb-4 inline-block">← All Tools</a>

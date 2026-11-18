@@ -141,6 +141,13 @@ export default function TypingSpeedTestPage() {
         <meta name="description" content={META.description} />
         <meta name="keywords" content={META.keywords} />
         <link rel="canonical" href={`${SITE_URL}/tools/typing-speed-test`} />
+        <meta property="og:title" content={META.title} />
+        <meta property="og:description" content={META.description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`/tools/typing-speed-test`} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={META.title} />
+        <meta name="twitter:description" content={META.description} />
       
 
       <div className="max-w-4xl mx-auto px-4 py-8">
