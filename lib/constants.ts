@@ -1,5 +1,5 @@
 export const SITE_NAME = "CalcTools";
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://calctools.vercel.app";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://new-three-omega-54.vercel.app";
 export const SITE_DESCRIPTION = "Free online calculators and tools — EMI Calculator, GST Calculator, SIP Calculator, QR Code Generator, Image Compressor, and 50+ more tools.";
 
 export interface Tool {
