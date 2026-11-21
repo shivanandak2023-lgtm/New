@@ -69,6 +69,7 @@ const translations: Record<LangCode, Record<string, string>> = {
     seoUse4: "購入品の税額成分の特定",
   },
   de: {}, fr: {}, es: {}, hi: {}, pt: {},
+    no: {},
 };
 
 export default function JapanConsumptionTaxPage() {

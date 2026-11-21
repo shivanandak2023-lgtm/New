@@ -103,6 +103,7 @@ const translations: Record<LangCode, Record<string, string>> = {
     seoText4: "As principais deducoes da base de calculo sao as contribuicoes ao INSS (previdencia social obrigatoria) e R$189,59 por dependente. Outras deducoes como contribuicoes a previdencia privada tambem podem ser aplicadas, mas nao estao cobertas nesta calculadora simplificada.",
   },
   de: {}, fr: {}, es: {}, hi: {}, ja: {},
+    no: {},
 };
 
 interface BandResult {

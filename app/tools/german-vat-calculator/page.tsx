@@ -64,6 +64,7 @@ const translations: Record<LangCode, Record<string, string>> = {
     seoText4: "Um den Nettobetrag aus einem Bruttobetrag zu ermitteln: Netto = Brutto / (1 + MwSt-Satz). Zum Beispiel ergibt ein Bruttopreis von 119 EUR bei 19% MwSt einen Nettopreis von 100 EUR, wobei 19 EUR die im Bruttopreis enthaltene MwSt ist.",
   },
   ja: {}, pt: {}, fr: {}, es: {}, hi: {},
+    no: {},
 };
 
 export default function GermanVatCalculatorPage() {

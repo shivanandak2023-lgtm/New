@@ -74,6 +74,7 @@ const translations: Record<LangCode, Record<string, string>> = {
     seoText4: "O teto de contribuicao do INSS e R$7.786,02. Qualquer salario acima deste valor nao esta sujeito a contribuicao adicional ao INSS. A contribuicao mensal maxima e de aproximadamente R$908,85.",
   },
   de: {}, fr: {}, es: {}, hi: {}, ja: {},
+    no: {},
 };
 
 interface BandResult {

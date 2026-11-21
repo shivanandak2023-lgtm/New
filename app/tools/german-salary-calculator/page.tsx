@@ -88,6 +88,7 @@ const translations: Record<LangCode, Record<string, string>> = {
     seoText4: "Der Solidaritätszuschlag beträgt 5,5% der Einkommensteuer, wurde aber seit 2021 für die meisten Steuerzahler abgeschafft. Er gilt nur, wenn die jährliche Einkommensteuer 18.130 € (Ledige) bzw. 36.260 € (Verheiratete) übersteigt, mit einer Gleitzone oberhalb dieser Schwellen.",
   },
   ja: {}, pt: {}, fr: {}, es: {}, hi: {},
+    no: {},
 };
 
 const STATES = [

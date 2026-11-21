@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export type LangCode = "en" | "de" | "ja" | "pt" | "fr" | "es" | "hi";
+export type LangCode = "en" | "de" | "ja" | "pt" | "fr" | "es" | "hi" | "no";
 
 interface LangOption {
   code: LangCode;
@@ -19,6 +19,7 @@ const LANGUAGES: LangOption[] = [
   { code: "fr", flag: "🇫🇷", name: "French", nativeName: "Français" },
   { code: "es", flag: "🇪🇸", name: "Spanish", nativeName: "Español" },
   { code: "hi", flag: "🇮🇳", name: "Hindi", nativeName: "हिन्दी" },
+  { code: "no", flag: "🇳🇴", name: "Norwegian", nativeName: "Norsk" },
 ];
 
 interface LanguageSwitcherProps {
